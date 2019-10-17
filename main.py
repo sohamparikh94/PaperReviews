@@ -1,18 +1,67 @@
 import json
 import spacy
+from tqdm import tqdm
 from IPython import embed
 from analysis_utils import AnalyzerUtils
+from classifier_utils import ClassifierUtils
+import warnings
+
+def group_by_revision(data):
+
+    data_by_revision = dict()
+    for doc_id in data:
+        if('revisions') in data[doc_id]:
+            for revision in data[doc_id]['revisions']:
+                if(revision not in data_by_revision):
+                    data_by_revision[revision] = dict()
+                if('reviews' in data[doc_id]['revisions'][revision]):
+                    for review in data[doc_id]['revisions'][revision]['reviews']:
+                        review_obj = data[doc_id]['revisions'][revision]['reviews'][review]
+                        if('text' in review_obj and 'decision' in review_obj):
+                            if(len(review_obj['text'].strip()) > 0 and len(review_obj['decision']) > 0):
+                                if(review_obj['decision'] not in data_by_revision[revision]):
+                                    data_by_revision[revision][review_obj['decision']] = list()
+                                data_by_revision[revision][review_obj['decision']].append(review_obj['text'])
+
+    return data_by_revision
+
+def load_data():
+    with open('../data/review_decisions.json') as f:
+        data = json.load(f)
+    data_by_revision = group_by_revision(data)
+    documents = data_by_revision['0']['Accept'] + data_by_revision['0']['Minor Revision'] + data_by_revision['0']['Major Revision'] + data_by_revision['0']['Reject']
+    labels = [0]*len(data_by_revision['0']['Accept']) + [1]*len(data_by_revision['0']['Minor Revision']) + [2]*len(data_by_revision['0']['Major Revision']) + [3]*len(data_by_revision['0']['Reject'])
+
+    return documents, labels
 
 def main():
 
-    analyzer = AnalyzerUtils()
-    data = analyzer.load_review_data('../data/review_decisions.json')
-    review_rating_pairs = analyzer.get_review_rating_pairs(data)
-    word_counts = analyzer.get_classwise_word_count(review_rating_pairs)
-    lengths = analyzer.get_classwise_lengths(review_rating_pairs)
+    clf_utils = ClassifierUtils()
+    documents, labels = load_data()
+    clf_metadata = {'type': 'LR',
+                    'multi_class': 'ovr',
+    }
+    """
+    clf_metadata = {
+        'type': 'RF',
+        'n_estimators': 500,
+        'max_depth': 128
+    }
+    """
+    features_metadata = {'type': 'count',
+                        'use_sw': True,
+                        'use_length': False,
+                        'binary': False,
+                        'normalize': False,
+                        'append_binary': False
+    }
+    ordered_features1, ordered_features2, ordered_features3 = clf_utils.get_lr_features(documents, labels)
+    # metrics = clf_utils.cross_validate(documents, labels, clf_metadata, features_metadata, num_splits=5)
 
+    
     embed()
 
 
 if __name__ == "__main__":
+    warnings.filterwarnings('ignore')
     main()
