@@ -87,6 +87,8 @@ def main():
             metrics2[n][depth] = clf_utils.cross_validate(documents, labels, clf_metadata, features_metadata2, num_splits=5)
             metrics3[n][depth] = clf_utils.cross_validate(documents, labels, clf_metadata, features_metadata3, num_splits=5)
 
+    with open('../outputs/rf_large_metrics.pkl', 'wb') as f:
+        pkl.dump([metrics1, metrics2, metrics3], f)
     
     embed()
 
