@@ -48,15 +48,25 @@ def main():
         'max_depth': 128
     }
     """
-    features_metadata = {'type': 'count',
+    features_metadata1 = {'type': 'count',
                         'use_sw': True,
                         'use_length': False,
                         'binary': False,
                         'normalize': False,
-                        'append_binary': False
+                        'append_binary': False,
+                        'sampling': 'over'
     }
-    ordered_features1, ordered_features2, ordered_features3 = clf_utils.get_lr_features(documents, labels)
-    # metrics = clf_utils.cross_validate(documents, labels, clf_metadata, features_metadata, num_splits=5)
+    features_metadata2 = {'type': 'count',
+                        'use_sw': True,
+                        'use_length': False,
+                        'binary': False,
+                        'normalize': False,
+                        'append_binary': False,
+                        'sampling': 'under'
+    }
+    # ordered_features1, ordered_features2, ordered_features3 = clf_utils.get_lr_features(documents, labels)
+    metrics1 = clf_utils.cross_validate(documents, labels, clf_metadata, features_metadata1, num_splits=5)
+    metrics2 = clf_utils.cross_validate(documents, labels, clf_metadata, features_metadata2, num_splits=5)
 
     
     embed()
