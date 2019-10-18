@@ -43,32 +43,49 @@ def main():
                     'multi_class': 'ovr'
     }
     """
-    clf_metadata = {
-        'type': 'RF',
-        'n_estimators': 500,
-        'max_depth': 128,
-        'n_jobs': 1
-    }
-
-    features_metadata1 = {'type': 'count',
-                        'use_sw': True,
-                        'use_length': False,
-                        'binary': False,
-                        'normalize': False,
-                        'append_binary': False,
-                        'sampling': 'over'
-    }
-    features_metadata2 = {'type': 'count',
-                        'use_sw': True,
-                        'use_length': False,
-                        'binary': False,
-                        'normalize': False,
-                        'append_binary': False,
-                        'sampling': 'under'
-    }
-    # ordered_features1, ordered_features2, ordered_features3 = clf_utils.get_lr_features(documents, labels)
-    metrics1 = clf_utils.cross_validate(documents, labels, clf_metadata, features_metadata1, num_splits=5)
-    metrics2 = clf_utils.cross_validate(documents, labels, clf_metadata, features_metadata2, num_splits=5)
+    n_estimators = [100,200,300,500,700,900,1000,1500]
+    max_depth = [2,4,8,16,32,64,128,256]
+    metrics1 = dict()
+    metrics2 = dict()
+    metrics3 = dict()
+    for n in n_estimators:
+        metrics1[n] = dict()
+        metrics2[n] = dict()
+        metrics3[n] = dict()
+        for depth in tqdm(max_depth):
+            clf_metadata = {
+                'type': 'RF',
+                'n_estimators': n,
+                'max_depth': depth,
+                'n_jobs': 8
+            }
+            features_metadata1 = {'type': 'count',
+                                'use_sw': True,
+                                'use_length': False,
+                                'binary': False,
+                                'normalize': False,
+                                'append_binary': False,
+                                'sampling': 'over'
+            }
+            features_metadata2 = {'type': 'count',
+                                'use_sw': True,
+                                'use_length': False,
+                                'binary': False,
+                                'normalize': False,
+                                'append_binary': False,
+                                'sampling': 'under'
+            }
+            features_metadata3 = {'type': 'count',
+                                'use_sw': True,
+                                'use_length': False,
+                                'binary': False,
+                                'normalize': False,
+                                'append_binary': False,
+                                'sampling': None
+            }
+            metrics1[n][depth] = clf_utils.cross_validate(documents, labels, clf_metadata, features_metadata1, num_splits=5)
+            metrics2[n][depth] = clf_utils.cross_validate(documents, labels, clf_metadata, features_metadata2, num_splits=5)
+            metrics3[n][depth] = clf_utils.cross_validate(documents, labels, clf_metadata, features_metadata3, num_splits=5)
 
     
     embed()
