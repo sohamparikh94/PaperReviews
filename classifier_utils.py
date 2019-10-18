@@ -115,7 +115,7 @@ class ClassifierUtils:
             else:
                 clf = LogisticRegression()
         elif(clf_metadata['type'] == 'RF'):
-            clf = RandomForestClassifier(n_estimators=clf_metadata['n_estimators'], max_depth=clf_metadata['max_depth'])
+            clf = RandomForestClassifier(n_estimators=clf_metadata['n_estimators'], max_depth=clf_metadata['max_depth'], n_jobs=clf_metadata['n_jobs'])
         else:
             raise NotImplementedError("Classifier type %s is not supported" % clf_metadata['type'])
 

@@ -38,16 +38,18 @@ def main():
 
     clf_utils = ClassifierUtils()
     documents, labels = load_data()
+    """
     clf_metadata = {'type': 'LR',
-                    'multi_class': 'ovr',
+                    'multi_class': 'ovr'
     }
     """
     clf_metadata = {
         'type': 'RF',
         'n_estimators': 500,
-        'max_depth': 128
+        'max_depth': 128,
+        'n_jobs': 1
     }
-    """
+
     features_metadata1 = {'type': 'count',
                         'use_sw': True,
                         'use_length': False,
