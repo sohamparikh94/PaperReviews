@@ -234,15 +234,18 @@ class ClassifierUtils:
         return all_doc_counts, all_token_counts
 
 
-    def get_lr_features(self, train_docs, labels, multi_class='ovr'):
+    def get_lr_features(self, train_docs, labels, multi_class='ovr', use_stopwords=True):
 
         all_doc_counts, all_token_counts = self.get_token_counts(train_docs, labels)
         if(multi_class == 'ovr'):
             clf = LogisticRegression()
         else:
             clf = LogisticRegression(multi_class='multinomial', solver='saga')
-
-        count_vectorizer = CountVectorizer(tokenizer=self.tokenizer)
+        if(use_stopwords):
+            tokenizer = self.tokenizer
+        else:
+            tokenizer = self.tokenizer_sw
+        count_vectorizer = CountVectorizer(tokenizer=tokenizer)
         count_vectorizer.fit(train_docs)
         X_train = count_vectorizer.transform(train_docs)
         clf.fit(X_train, labels)
