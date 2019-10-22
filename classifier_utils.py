@@ -111,9 +111,9 @@ class ClassifierUtils:
             clf = MultinomialNB()
         elif(clf_metadata['type'] == 'LR'):
             if(clf_metadata['multi_class'] == 'multinomial'):
-                clf = LogisticRegression(multi_class='multinomial', solver='saga')
+                clf = LogisticRegression(multi_class='multinomial', solver='saga', n_jobs = clf_metadata['n_jobs'])
             else:
-                clf = LogisticRegression()
+                clf = LogisticRegression(n_jobs=clf_metadata['n_jobs'])
         elif(clf_metadata['type'] == 'RF'):
             clf = RandomForestClassifier(n_estimators=clf_metadata['n_estimators'], max_depth=clf_metadata['max_depth'], n_jobs=clf_metadata['n_jobs'])
         else:
