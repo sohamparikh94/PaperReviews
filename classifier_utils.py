@@ -121,8 +121,7 @@ class ClassifierUtils:
 
         return clf
 
-
-    def prepare_features(self, features_metadata, train_docs, test_docs):
+    def prepare_text_features(self, features_metadata, train_docs, test_docs):
 
         if(features_metadata['use_sw']):
             tokenizer = self.tokenizer
@@ -163,6 +162,23 @@ class ClassifierUtils:
             vectorizer = TfidfVectorizer(tokenizer=tokenizer)
             X_train = vectorizer.transform(train_docs)
             X_test = vectorizer.transform(test_docs)
+
+        return X_train, X_test
+
+
+    def prepare_features(self, features_metadata, train_docs, test_docs):
+
+        if(type(train_docs[0]) == dict):
+            tr_docs = [doc['text'] for doc in train_docs]
+            tst_docs = [doc['text'] for doc in test_docs]
+            txt_train, txt_test = self.prepare_text_features(features_metadata, tr_docs, tst_docs)
+            if(features['decision_encoding']):
+                X_train, X_test = self.encode_decision(txt_train, txt_test, train_docs, test_docs, features['decision_encoding'])
+            else:
+                X_train = txt_train
+                X_test = txt_test
+        else:
+            X_train, X_test = self.prepare_text_features(features_metadata, train_docs, test_docs)
 
         return X_train, X_test
 
