@@ -7,6 +7,7 @@ from scipy import sparse
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
 from IPython import embed
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.metrics import *
 from sklearn.ensemble import RandomForestClassifier
@@ -165,6 +166,25 @@ class ClassifierUtils:
 
         return X_train, X_test
 
+    def one_hot(self, lst):
+
+        encoding = np.zeros((len(lst), 4))
+        encoding[np.arange(len(lst)), lst] = 1
+
+        return encoding
+
+    def encode_decision(self, txt_train, txt_test, train_docs, test_docs, decision_encoding):
+
+        if(decision_encoding == 1):
+            train_decision_features = self.one_hot([doc['decision'] for doc in train_docs])
+            test_decision_features = self.one_hot([doc['decision'] for doc in test_docs])
+            train_dense = txt_train.todense()
+            test_dense = txt_test.todense()
+            X_train = np.concatenate((train_dense, train_decision_features), axis=1)
+            X_test = np.concatenate((test_dense, test_decision_features), axis=1)
+
+        return X_train, X_test
+
 
     def prepare_features(self, features_metadata, train_docs, test_docs):
 
@@ -250,13 +270,36 @@ class ClassifierUtils:
         return all_doc_counts, all_token_counts
 
 
+    def get_rf_features(self, train_docs, labels, num_estimators, max_depth, use_stopwords=True):
+
+        clf = RandomForestClassifier(n_estimators=num_estimators, max_depth=max_depth, n_jobs=8)
+        if(use_stopwords):
+            tokenizer = self.tokenizer
+        else:
+            tokenizer = self.tokenizer_sw
+        vectorizer = CountVectorizer(tokenizer=tokenizer)
+        vectorizer.fit(train_docs)
+        X_train = vectorizer.transform(train_docs)
+        clf.fit(X_train, labels)
+        feature_names = vectorizer.get_feature_names()
+        feature_importances = clf.feature_importances_
+        sorted_indices = np.argsort(feature_importances)[::-1]
+        important_features = list()
+        for idx in sorted_indices:
+            if(feature_importances[idx] > 0):
+                important_features.append(feature_names[idx])
+
+        return important_features
+
+
+
     def get_lr_features(self, train_docs, labels, multi_class='ovr', use_stopwords=True):
 
         all_doc_counts, all_token_counts = self.get_token_counts(train_docs, labels)
         if(multi_class == 'ovr'):
-            clf = LogisticRegression()
+            clf = LogisticRegression(n_jobs=8)
         else:
-            clf = LogisticRegression(multi_class='multinomial', solver='saga')
+            clf = LogisticRegression(multi_class='multinomial', solver='saga', n_jobs=8)
         if(use_stopwords):
             tokenizer = self.tokenizer
         else:
