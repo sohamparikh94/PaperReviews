@@ -172,8 +172,8 @@ class ClassifierUtils:
             tr_docs = [doc['text'] for doc in train_docs]
             tst_docs = [doc['text'] for doc in test_docs]
             txt_train, txt_test = self.prepare_text_features(features_metadata, tr_docs, tst_docs)
-            if(features['decision_encoding']):
-                X_train, X_test = self.encode_decision(txt_train, txt_test, train_docs, test_docs, features['decision_encoding'])
+            if(features_metadata['decision_encoding']):
+                X_train, X_test = self.encode_decision(txt_train, txt_test, train_docs, test_docs, features_metadata['decision_encoding'])
             else:
                 X_train = txt_train
                 X_test = txt_test
