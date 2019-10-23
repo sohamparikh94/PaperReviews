@@ -182,6 +182,8 @@ class ClassifierUtils:
             test_dense = txt_test.todense()
             X_train = np.concatenate((train_dense, train_decision_features), axis=1)
             X_test = np.concatenate((test_dense, test_decision_features), axis=1)
+            X_train = sparse.csr_matrix(X_train)
+            X_test = sparse.csr_matrix(X_test)
 
         return X_train, X_test
 
