@@ -25,6 +25,7 @@ class DataUtils:
     def group_by_disagreement_multinomial(self, data):
 
         data_by_disagreement = dict()
+        decision_dict = {'Accept': 0, 'Minor Revision': 1, 'Major Revision': 2, 'Reject': 3}
         for doc_id in data:
             if('revisions' in data[doc_id]):
                 if('0' in data[doc_id]['revisions']):
@@ -36,8 +37,8 @@ class DataUtils:
                             for review in data[doc_id]['revisions']['0']['reviews']:
                                 review_obj = data[doc_id]['revisions']['0']['reviews'][review]
                                 if('decision' in review_obj and 'text' in review_obj):
-                                    if(review_obj['decision'] and review_obj['text'].strip()):
-                                        data_by_disagreement[combined_decision].append(review_obj)
+                                    if(review_obj['decision'] and review_obj['text'].strip() and review_obj['decision'].strip() in decision_dict):
+                                        data_by_disagreement[combined_decision].append({'text': review_obj['text'], 'decision': decision_dict[review_obj['decision']]})
 
         return data_by_disagreement
 
