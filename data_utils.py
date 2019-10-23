@@ -22,7 +22,26 @@ class DataUtils:
         return data_by_revision
 
 
-    def group_by_disagreement(self, data):
+    def group_by_disagreement_multinomial(self, data):
+
+        data_by_disagreement = dict()
+        for doc_id in data:
+            if('revisions' in data[doc_id]):
+                if('0' in data[doc_id]['revisions']):
+                    if('combined_decision' in data[doc_id]['revisions']['0']):
+                        combined_decision = data[doc_id]['revisions']['0']['combined_decision']
+                        if(combined_decision not in data_by_disagreement):
+                            data_by_disagreement[combined_decision] = list()
+                        if('reviews' in data[doc_id]['revisions']['0']):
+                            for review in data[doc_id]['revisions']['0']['reviews']:
+                                review_obj = data[doc_id]['revisions']['0']['reviews'][review]
+                                if('decision' in review_obj and 'text' in review_obj):
+                                    if(review_obj['decision'] and review_obj['text'].strip()):
+                                        data_by_disagreement[combined_decision].append(review_obj)
+
+        return data_by_disagreement
+
+    def group_by_disagreement_binary(self, data):
 
         data_by_disagreement = dict()
         data_by_disagreement['good'] = list()
@@ -57,13 +76,18 @@ class DataUtils:
 
         return documents, labels
 
-    def load_disagreement_data(self):
+    def load_disagreement_data(self, binary=True):
 
         with open('../data/review_decisions.json') as f:
             data = json.load(f)
-        data_by_disagreement = self.group_by_disagreement(data)
-        documents = data_by_disagreement['good'] + data_by_disagreement['bad']
-        labels = [0]*len(data_by_disagreement['good']) + [1]*len(data_by_disagreement['bad'])
+        if(binary):
+            data_by_disagreement = self.group_by_disagreement_binary(data)
+            documents = data_by_disagreement['good'] + data_by_disagreement['bad']
+            labels = [0]*len(data_by_disagreement['good']) + [1]*len(data_by_disagreement['bad'])
+        else:
+            data_by_disagreement = self.group_by_disagreement_multinomial(data)
+            documents = data_by_disagreement['Accept'] + data_by_disagreement['Minor Revision'] + data_by_disagreement['Major Revision'] + data_by_disagreement['Reject']
+            labels = [0]*len(data_by_disagreement['Accept'])+ [1]*len(data_by_disagreement['Minor Revision']) + [2]*len(data_by_disagreement['Major Revision']) + [3]*len(data_by_disagreement['Reject'])
 
         return documents, labels
 
