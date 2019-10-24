@@ -47,6 +47,7 @@ class DataUtils:
         data_by_disagreement = dict()
         data_by_disagreement['good'] = list()
         data_by_disagreement['bad'] = list()
+        decision_dict = {'Accept': 0, 'Minor Revision': 1, 'Major Revision': 2, 'Reject': 3}
         for doc_id in data:
             if('revisions' in data[doc_id]):
                 if('0' in data[doc_id]['revisions']):
@@ -59,10 +60,11 @@ class DataUtils:
                                     if(decision):
                                         if('text' in data[doc_id]['revisions']['0']['reviews'][review]):
                                             if(data[doc_id]['revisions']['0']['reviews'][review]['text'].strip()):
-                                                if(decision == combined_decision):
-                                                    data_by_disagreement['good'].append(data[doc_id]['revisions']['0']['reviews'][review]['text'])
-                                                else:
-                                                    data_by_disagreement['bad'].append(data[doc_id]['revisions']['0']['reviews'][review]['text'])
+                                                if(decision in decision_dict):
+                                                    if(decision == combined_decision):
+                                                        data_by_disagreement['good'].append({'text': data[doc_id]['revisions']['0']['reviews'][review]['text'], 'decision': decision_dict[decision]})
+                                                    else:
+                                                        data_by_disagreement['bad'].append({'text': data[doc_id]['revisions']['0']['reviews'][review]['text'], 'decision': decision_dict[decision]})
 
         return data_by_disagreement
 

@@ -4,6 +4,7 @@ import random
 import numpy as np
 from tqdm import tqdm
 from scipy import sparse
+from collections import Counter
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
 from IPython import embed
@@ -166,9 +167,11 @@ class ClassifierUtils:
 
         return X_train, X_test
 
-    def one_hot(self, lst):
+    def one_hot(self, lst, num_classes = None):
 
-        encoding = np.zeros((len(lst), 4))
+        if(num_classes is None):
+            num_classes = len(Counter(lst))
+        encoding = np.zeros((len(lst), num_classes))
         encoding[np.arange(len(lst)), lst] = 1
 
         return encoding
