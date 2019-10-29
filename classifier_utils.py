@@ -40,7 +40,7 @@ class ClassifierUtils:
                 split_line = line.split()
                 word = split_line[0]
                 embedding = [float(x) for x in split_line[1:]]
-                glove_embeddings[word] = embedding
+                self.glove_embeddings[word] = embedding
 
 
     def forbidden_sw(self, token):
