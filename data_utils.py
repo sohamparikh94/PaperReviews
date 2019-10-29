@@ -125,8 +125,8 @@ class DataUtils:
         with open('../data/review_decisions.json') as f:
             data = json.load(f)
         data_by_combined = self.get_combined_reviews(data)
-        documents = data_by_disagreement['Accept'] + data_by_disagreement['Minor Revision'] + data_by_disagreement['Major Revision'] + data_by_disagreement['Reject']
-        labels = [0]*len(data_by_disagreement['Accept']) + [1]*len(data_by_disagreement['Minor Revision']) + [2]*len(data_by_disagreement['Major Revision']) + [3]*len(data_by_disagreement['Reject'])
+        documents = data_by_combined['Accept'] + data_by_combined['Minor Revision'] + data_by_combined['Major Revision'] + data_by_combined['Reject']
+        labels = [0]*len(data_by_combined['Accept']) + [1]*len(data_by_combined['Minor Revision']) + [2]*len(data_by_combined['Major Revision']) + [3]*len(data_by_combined['Reject'])
 
         return documents, labels
 
