@@ -182,7 +182,7 @@ class ClassifierUtils:
             vectorizer = TfidfVectorizer(tokenizer=tokenizer)
             X_train = vectorizer.transform(train_docs)
             X_test = vectorizer.transform(test_docs)
-        elif(features_metadata['type'] == 'glove_bow'):
+        # elif(features_metadata['type'] == 'glove_bow'):
 
 
         return X_train, X_test
