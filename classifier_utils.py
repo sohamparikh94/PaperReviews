@@ -5,6 +5,7 @@ import numpy as np
 from tqdm import tqdm
 from scipy import sparse
 from collections import Counter
+
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
 from IPython import embed
@@ -13,17 +14,33 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.metrics import *
 from sklearn.ensemble import RandomForestClassifier
 from collections import Counter
+
 from imblearn.over_sampling import RandomOverSampler
 from imblearn.under_sampling import RandomUnderSampler
 
+
 class ClassifierUtils:
 
-    def __init__(self):
+    def __init__(self, pretrained_dir):
 
         self.nlp_light = spacy.load('en', disable=['tagger', 'parser', 'ner'])
         self.nlp = spacy.load('en')
         self.stop_words = spacy.lang.en.stop_words.STOP_WORDS
+        self.load_glove(pretrained_dir)
         self.alphabet = string.ascii_lowercase
+
+
+    def load_glove(self, pretrained_dir):
+
+        self.glove_embeddings = dict()
+        with open(os.path.join(pretrained_dir, 'glove', 'glove.840B.300d.txt')) as f:
+            print("Loading GloVe Embeddings")
+            for line in tqdm(f):
+                split_line = line.split()
+                word = split_line[0]
+                embedding = [float(x) for x in split_line[1:]]
+                glove_embeddings[word] = embedding
+
 
     def forbidden_sw(self, token):
 
@@ -36,6 +53,7 @@ class ClassifierUtils:
             return True
 
         return False
+
 
     def forbidden(self, token):
 
@@ -160,10 +178,12 @@ class ClassifierUtils:
                 test_bool = test_bool.astype(np.int64)
                 X_train = sparse.csr_matrix(np.concatenate((X_train, train_bool), axis=1))
                 X_test = sparse.csr_matrix(np.concatenate((X_test, test_bool), axis=1))
-        elif(features=='tfidf'):
+        elif(features_metadata['type'] == 'tfidf'):
             vectorizer = TfidfVectorizer(tokenizer=tokenizer)
             X_train = vectorizer.transform(train_docs)
             X_test = vectorizer.transform(test_docs)
+        elif(features_metadata['type'] == 'glove_bow'):
+
 
         return X_train, X_test
 
