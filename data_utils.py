@@ -22,10 +22,8 @@ class DataUtils:
         return data_by_revision
 
 
-    def get_combined_reviews(self):
+    def get_combined_reviews(self, data):
 
-        with open('../data/review_decisions.json') as f:
-            data = json.load(f)
         data_by_combined = dict()
         decision_dict = {'Accept': 0, 'Minor Revision': 1, 'Major Revision': 2, 'Reject': 3}
         for doc_id in data:
@@ -118,6 +116,17 @@ class DataUtils:
             data_by_disagreement = self.group_by_disagreement_multinomial(data)
             documents = data_by_disagreement['Accept'] + data_by_disagreement['Minor Revision'] + data_by_disagreement['Major Revision'] + data_by_disagreement['Reject']
             labels = [0]*len(data_by_disagreement['Accept'])+ [1]*len(data_by_disagreement['Minor Revision']) + [2]*len(data_by_disagreement['Major Revision']) + [3]*len(data_by_disagreement['Reject'])
+
+        return documents, labels
+
+
+    def load_combined_review_data(self):
+
+        with open('../data/review_decisions.json') as f:
+            data = json.load(f)
+        data_by_combined = self.get_combined_reviews(data)
+        documents = data_by_disagreement['Accept'] + data_by_disagreement['Minor Revision'] + data_by_disagreement['Major Revision'] + data_by_disagreement['Reject']
+        labels = [0]*len(data_by_disagreement['Accept']) + [1]*len(data_by_disagreement['Minor Revision']) + [2]*len(data_by_disagreement['Major Revision']) + [3]*len(data_by_disagreement['Reject'])
 
         return documents, labels
 
