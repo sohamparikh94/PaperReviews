@@ -38,8 +38,9 @@ class ClassifierUtils:
             print("Loading GloVe Embeddings")
             for line in tqdm(f):
                 split_line = line.split()
-                word = split_line[0]
-                embedding = [float(x) for x in split_line[1:]]
+                n = len(split_line)
+                word = ' '.join(split_line[0:(n-300+1)]).strip()
+                embedding = [float(x) for x in split_line[-300:]]
                 self.glove_embeddings[word] = embedding
 
 
