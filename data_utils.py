@@ -22,6 +22,33 @@ class DataUtils:
         return data_by_revision
 
 
+    def get_combined_reviews(self):
+
+        with open('../data/review_decisions.json') as f:
+            data = json.load(f)
+        data_by_combined = dict()
+        decision_dict = {'Accept': 0, 'Minor Revision': 1, 'Major Revision': 2, 'Reject': 3}
+        for doc_id in data:
+            if('revisions' in data[doc_id]):
+                combined_review = ""
+                if('0' in data[doc_id]['revisions']):
+                    if('combined_decision' in data[doc_id]['revisions']['0']):
+                        combined_decision = data[doc_id]['revisions']['0']['combined_decision']
+                        if(combined_decision not in data_by_combined and combined_decision in decision_dict):
+                            data_by_combined[combined_decision] = list()
+                        if('reviews' in data[doc_id]['revisions']['0']):
+                            for review in data[doc_id]['revisions']['0']['reviews']:
+                                review_obj = data[doc_id]['revisions']['0']['reviews'][review]
+                                if('text' in review_obj):
+                                    if(review_obj['text'].strip()):
+                                        combined_review += " " + review_obj['text'].strip()
+            if(combined_review.strip() and combined_decision in decision_dict):
+                data_by_combined[combined_decision].append(combined_review)
+
+        return data_by_combined
+
+
+
     def group_by_disagreement_multinomial(self, data):
 
         data_by_disagreement = dict()
@@ -93,6 +120,7 @@ class DataUtils:
             labels = [0]*len(data_by_disagreement['Accept'])+ [1]*len(data_by_disagreement['Minor Revision']) + [2]*len(data_by_disagreement['Major Revision']) + [3]*len(data_by_disagreement['Reject'])
 
         return documents, labels
+
 
 
     
