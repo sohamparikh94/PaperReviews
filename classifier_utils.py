@@ -29,6 +29,21 @@ class ClassifierUtils:
         self.stop_words = spacy.lang.en.stop_words.STOP_WORDS
         self.load_glove(pretrained_dir)
         self.alphabet = string.ascii_lowercase
+        self.load_use_graph()
+
+
+    def load_use_graph(self):
+
+        graph = tf.Graph()
+        with graph.as_default():
+            self.text_input = tf.placeholder(tf.string, shape=[None])
+            embed = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/2")
+            self.embedded_text = embed(self.text_input)
+            init_op = tf.group([tf.global_variables_initializer(), tf.tables_initializer()])
+        graph.finalize()
+        self.session = tf.Session(graph=graph)
+        self.session.run(init_op)
+
 
 
     def load_glove(self, pretrained_dir):
@@ -187,24 +202,33 @@ class ClassifierUtils:
         elif(features_metadata['type'] == 'glove_bow'):
             X_train = self.embed_documents(train_docs, 'glove', tokenizer)
             X_test = self.embed_documents(test_docs, 'glove', tokenizer)
+        elif(features_metadata['type'] == 'USE'):
+            X_train = self.embed_documents(train_docs, 'USE', tokenizer)
+            X_test = self.embed_documents(test_docs, 'USE', tokenizer)
 
         return X_train, X_test
 
 
-    def embed_documents(self, docs, tokenizer):
+    def embed_documents(self, docs, embedding_type, tokenizer):
 
-        doc_features = list()
-        for doc in tqdm(docs):
-            tokens = tokenizer(doc)
-            for token in tokens:
-                doc_feature = np.zeros((300,))
-                token_count = 0
-                if(token in self.glove_embeddings):
-                    doc_feature += self.glove_embeddings[token]
-                    token_count += 1
-            doc_features.append(doc_feature)
-        doc_features = np.array(doc_features)
-
+        if(embedding_type=='glove'):
+            doc_features = list()
+            for doc in tqdm(docs):
+                tokens = tokenizer(doc)
+                for token in tokens:
+                    doc_feature = np.zeros((300,))
+                    token_count = 0
+                    if(token in self.glove_embeddings):
+                        doc_feature += self.glove_embeddings[token]
+                        token_count += 1
+                doc_features.append(doc_feature)
+            doc_features = np.array(doc_features)
+        elif(embedding_type=='USE'):
+            doc_features = list()
+            for doc in docs:
+                embedding = self.session.run(self.embedded_text, feed_dict={self.text_input: [document]})
+                doc_features.append(embedding[0])
+            doc_features = np.array(doc_features)
 
         return doc_features
 
