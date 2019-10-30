@@ -33,7 +33,7 @@ class ClassifierUtils:
         self.nlp_light = spacy.load('en', disable=['tagger', 'parser', 'ner'])
         self.nlp = spacy.load('en')
         self.stop_words = spacy.lang.en.stop_words.STOP_WORDS
-        self.load_glove(pretrained_dir)
+        # self.load_glove(pretrained_dir)
         self.alphabet = string.ascii_lowercase
         self.load_use_graph()
 
@@ -232,7 +232,7 @@ class ClassifierUtils:
         elif(embedding_type=='USE'):
             doc_features = list()
             for doc in docs:
-                embedding = self.session.run(self.embedded_text, feed_dict={self.text_input: [document]})
+                embedding = self.session.run(self.embedded_text, feed_dict={self.text_input: [doc]})
                 doc_features.append(embedding[0])
             doc_features = np.array(doc_features)
 
