@@ -19,6 +19,12 @@ from collections import Counter
 from imblearn.over_sampling import RandomOverSampler
 from imblearn.under_sampling import RandomUnderSampler
 
+import tensorflow as tf
+import tensorflow_hub as hub
+import tensorflow.compat.v1 as tf
+
+tf.disable_v2_behavior()
+
 
 class ClassifierUtils:
 
