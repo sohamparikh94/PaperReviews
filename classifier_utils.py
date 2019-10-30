@@ -184,10 +184,30 @@ class ClassifierUtils:
             vectorizer = TfidfVectorizer(tokenizer=tokenizer)
             X_train = vectorizer.transform(train_docs)
             X_test = vectorizer.transform(test_docs)
-        # elif(features_metadata['type'] == 'glove_bow'):
-
+        elif(features_metadata['type'] == 'glove_bow'):
+            X_train = self.embed_documents(train_docs, 'glove', tokenizer)
+            X_test = self.embed_documents(test_docs, 'glove', tokenizer)
 
         return X_train, X_test
+
+
+    def embed_documents(self, docs, tokenizer):
+
+        doc_features = list()
+        for doc in tqdm(docs):
+            tokens = tokenizer(doc)
+            for token in tokens:
+                doc_feature = np.zeros((300,))
+                token_count = 0
+                if(token in self.glove_embeddings):
+                    doc_feature += self.glove_embeddings[token]
+                    token_count += 1
+            doc_features.append(doc_feature)
+        doc_features = np.array(doc_features)
+
+
+        return doc_features
+
 
     def one_hot(self, lst, num_classes = None):
 
