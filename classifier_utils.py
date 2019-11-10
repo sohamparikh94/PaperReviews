@@ -4,12 +4,13 @@ import string
 import random
 import numpy as np
 from tqdm import tqdm
+from IPython import embed
 from scipy import sparse
 from collections import Counter
 
+
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.linear_model import LogisticRegression
-from IPython import embed
+from sklearn.linear_model import LogisticRegression, LinearRegression, Ridge, Lasso
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.metrics import *
@@ -23,19 +24,22 @@ import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow.compat.v1 as tf
 
+
 tf.disable_v2_behavior()
 
 
 class ClassifierUtils:
 
-    def __init__(self, pretrained_dir):
+    def __init__(self, pretrained_dir=None, load_glove=False, load_use=False):
 
         self.nlp_light = spacy.load('en', disable=['tagger', 'parser', 'ner'])
         self.nlp = spacy.load('en')
         self.stop_words = spacy.lang.en.stop_words.STOP_WORDS
-        # self.load_glove(pretrained_dir)
+        if(load_glove):
+            self.load_glove(pretrained_dir)
         self.alphabet = string.ascii_lowercase
-        self.load_use_graph()
+        if(load_use):
+            self.load_use_graph()
 
 
     def load_use_graph(self):
@@ -159,6 +163,12 @@ class ClassifierUtils:
                 clf = LogisticRegression(n_jobs=clf_metadata['n_jobs'])
         elif(clf_metadata['type'] == 'RF'):
             clf = RandomForestClassifier(n_estimators=clf_metadata['n_estimators'], max_depth=clf_metadata['max_depth'], n_jobs=clf_metadata['n_jobs'])
+        elif(clf_metadata['type'] == 'OLS'):
+            clf = LinearRegression()
+        elif(clf_metadata['type'] == 'Ridge'):
+            clf = Ridge(alpha=clf_metadata['alpha'])
+        elif(clf_metadata['type'] == 'Lasso'):
+            clf = Lasso(alpha=clf_metadata['alpha'])
         else:
             raise NotImplementedError("Classifier type %s is not supported" % clf_metadata['type'])
 
@@ -283,7 +293,7 @@ class ClassifierUtils:
 
         
 
-    def evaluate(self, train_docs, y_train, test_docs, y_test, clf_metadata, features_metadata):
+    def evaluate(self, train_docs, y_train, test_docs, y_test, clf_metadata, features_metadata, task='classification', return_predictions = False):
 
         clf = self.get_classifier(clf_metadata)
         X_train, X_test = self.prepare_features(features_metadata, train_docs, test_docs)
@@ -295,10 +305,15 @@ class ClassifierUtils:
             X_train, y_train = rus.fit_resample(X_train, y_train)
         clf.fit(X_train, y_train)
         y_predicted = clf.predict(X_test)
-        metrics = classification_report(y_test, y_predicted, output_dict=True)
-        metrics['accuracy'] = accuracy_score(y_test, y_predicted)
-        metrics['confusion_matrix'] = confusion_matrix(y_test, y_predicted)
-        
+        if(task == 'classification'):
+            metrics = classification_report(y_test, y_predicted, output_dict=True)
+            metrics['accuracy'] = accuracy_score(y_test, y_predicted)
+            metrics['confusion_matrix'] = confusion_matrix(y_test, y_predicted)
+        else:
+            metrics = dict()
+            metrics['mse'] = mean_squared_error(y_test, y_predicted)
+            metrics['mae'] = mean_absolute_error(y_test, y_predicted)
+            metrics['predictions'] = y_predicted
         return metrics
 
 
