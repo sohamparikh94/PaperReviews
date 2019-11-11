@@ -20,10 +20,6 @@ from collections import Counter
 from imblearn.over_sampling import RandomOverSampler
 from imblearn.under_sampling import RandomUnderSampler
 
-import tensorflow as tf
-import tensorflow_hub as hub
-import tensorflow.compat.v1 as tf
-
 
 tf.disable_v2_behavior()
 
@@ -39,6 +35,9 @@ class ClassifierUtils:
             self.load_glove(pretrained_dir)
         self.alphabet = string.ascii_lowercase
         if(load_use):
+            import tensorflow as tf
+            import tensorflow_hub as hub
+            import tensorflow.compat.v1 as tf
             self.load_use_graph()
 
 
