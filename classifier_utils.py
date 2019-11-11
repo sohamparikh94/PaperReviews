@@ -21,7 +21,7 @@ from imblearn.over_sampling import RandomOverSampler
 from imblearn.under_sampling import RandomUnderSampler
 
 
-tf.disable_v2_behavior()
+
 
 
 class ClassifierUtils:
@@ -38,6 +38,8 @@ class ClassifierUtils:
             import tensorflow as tf
             import tensorflow_hub as hub
             import tensorflow.compat.v1 as tf
+            tf.disable_v2_behavior()
+            
             self.load_use_graph()
 
 
