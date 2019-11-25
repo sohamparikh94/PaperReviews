@@ -17,9 +17,6 @@ from sklearn.metrics import *
 from sklearn.ensemble import RandomForestClassifier
 from collections import Counter
 
-from imblearn.over_sampling import RandomOverSampler
-from imblearn.under_sampling import RandomUnderSampler
-
 
 
 
@@ -39,7 +36,7 @@ class ClassifierUtils:
             import tensorflow_hub as hub
             import tensorflow.compat.v1 as tf
             tf.disable_v2_behavior()
-            
+
             self.load_use_graph()
 
 
@@ -292,7 +289,45 @@ class ClassifierUtils:
 
     # def get_confusion_matrix(self, train_docs, y_train, test_docs, y_test, clf_metadata, features_metadata):
 
-        
+    def undersample(self, X_train, y_train):
+
+        num_labels = Counter(y_train)
+        examples = dict()
+        undersampled_examples = dict()
+        undersampled_X_train = list()
+        min_num = min([num_labels[x] for x in num_labels])
+        for label in num_labels:
+            examples[label] = list()
+        for idx, ex in enumerate(X_train):
+            examples[y_train[idx]].append(ex)
+        for label in examples:
+            undersampled_examples[y_train[idx]] = random.sample(examples[y_train[idx]], min_num)
+        for label in examples:
+            undersampled_X_train += undersampled_examples[label]
+            undersampled_y_train += [label]*min_num
+
+        return undersampled_X_train, undersampled_y_train
+
+
+    def oversample(self, X_train, y_train):
+
+        num_labels = Counter(y_train)
+        examples = dict()
+        oversampled_examples = dict()
+        oversampled_X_train = list()
+        min_num = max([num_labels[x] for x in num_labels])
+        for label in num_labels:
+            examples[label] = list()
+        for idx, ex in enumerate(X_train):
+            examples[y_train[idx]].append(ex)
+        for label in examples:
+            oversampled_examples[y_train[idx]] = random.sample(examples[y_train[idx]], min_num)
+        for label in examples:
+            oversampled_X_train += oversampled_examples[label]
+            oversampled_y_train += [label]*min_num
+
+        return oversampled_X_train, undersampled_y_train
+
 
     def evaluate(self, train_docs, y_train, test_docs, y_test, clf_metadata, features_metadata, task='classification', return_predictions = False):
 
@@ -300,10 +335,10 @@ class ClassifierUtils:
         X_train, X_test = self.prepare_features(features_metadata, train_docs, test_docs)
         if(features_metadata['sampling'] == 'over'):
             ros = RandomOverSampler(random_state=0)
-            X_train, y_train = ros.fit_resample(X_train, y_train)
+            X_train, y_train = self.undersample(X_train, y_train)
         elif(features_metadata['sampling'] == 'under'):
             rus = RandomUnderSampler(random_state=0)
-            X_train, y_train = rus.fit_resample(X_train, y_train)
+            X_train, y_train = self.oversample(X_train, y_train)
         clf.fit(X_train, y_train)
         y_predicted = clf.predict(X_test)
         if(task == 'classification'):
