@@ -334,11 +334,9 @@ class ClassifierUtils:
         clf = self.get_classifier(clf_metadata)
         X_train, X_test = self.prepare_features(features_metadata, train_docs, test_docs)
         if(features_metadata['sampling'] == 'over'):
-            ros = RandomOverSampler(random_state=0)
-            X_train, y_train = self.undersample(X_train, y_train)
-        elif(features_metadata['sampling'] == 'under'):
-            rus = RandomUnderSampler(random_state=0)
             X_train, y_train = self.oversample(X_train, y_train)
+        elif(features_metadata['sampling'] == 'under'):
+            X_train, y_train = self.undersample(X_train, y_train)
         clf.fit(X_train, y_train)
         y_predicted = clf.predict(X_test)
         if(task == 'classification'):
