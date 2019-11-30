@@ -19,8 +19,6 @@ from collections import Counter
 
 
 
-
-
 class ClassifierUtils:
 
     def __init__(self, pretrained_dir=None, load_glove=False, load_use=False):
@@ -140,15 +138,49 @@ class ClassifierUtils:
         return splits
 
 
-    def cross_validate(self, documents, labels, clf_metadata, features_metadata, num_splits=5):
+    def cross_validate(self, documents, labels, clf_metadata, features_metadata, task='classification', num_splits=5):
 
         splits = self.form_splits(documents, labels, num_splits=num_splits)
         all_metrics = list()
         for split in splits:
-            metrics = self.evaluate(split['train_docs'], split['y_train'], split['test_docs'], split['y_test'], clf_metadata, features_metadata)
+            metrics = self.evaluate(split['train_docs'], split['y_train'], split['test_docs'], split['y_test'], clf_metadata, features_metadata, task=task)
             all_metrics.append(metrics)
 
-        return all_metrics
+        summarized_metrics = self.summarize_metrics(all_metrics, task)
+
+        return summarized_metrics
+
+
+    def summarize_metrics(self, all_metrics, task):
+
+        summarized_metrics = dict()
+        summarized_metrics['test'] = dict()
+        summarized_metrics['train'] = dict()
+        if(task == 'classification'):
+            for label in all_metrics[0]['test']:
+                if(len(label) > 1):
+                    continue
+                summarized_metrics['test'][label] = dict()
+                summarized_metrics['train'][label] = dict()
+                summarized_metrics['test'][label]['precision'] = np.mean([x['test'][label]['precision'] for x in all_metrics])
+                summarized_metrics['test'][label]['recall'] = np.mean([x['test'][label]['recall'] for x in all_metrics])
+                summarized_metrics['test'][label]['f1-score'] = np.mean([x['test'][label]['f1-score'] for x in all_metrics])
+                summarized_metrics['train'][label]['precision'] = np.mean([x['train'][label]['precision'] for x in all_metrics])
+                summarized_metrics['train'][label]['recall'] = np.mean([x['train'][label]['recall'] for x in all_metrics])
+                summarized_metrics['train'][label]['f1-score'] = np.mean([x['train'][label]['f1-score'] for x in all_metrics])
+            summarized_metrics['test']['accuracy'] = np.mean([x['test']['accuracy'] for x in all_metrics])
+            summarized_metrics['train']['accuracy'] = np.mean([x['train']['accuracy'] for x in all_metrics])
+            summarized_metrics['test']['macro avg'] = np.mean([x['test']['macro avg']['f1-score'] for x in all_metrics])
+            summarized_metrics['train']['macro avg'] = np.mean([x['train']['macro avg']['f1-score'] for x in all_metrics])
+            summarized_metrics['test']['weighted avg'] = np.mean([x['test']['weighted avg']['f1-score'] for x in all_metrics])
+            summarized_metrics['train']['weighted avg'] = np.mean([x['train']['weighted avg']['f1-score'] for x in all_metrics])
+        else:
+            summarized_metrics['train']['mse'] = np.mean([x['train']['mse'] for x in all_metrics])
+            summarized_metrics['train']['mae'] = np.mean([x['train']['mae'] for x in all_metrics])
+            summarized_metrics['test']['mse'] = np.mean([x['test']['mse'] for x in all_metrics])
+            summarized_metrics['test']['mae'] = np.mean([x['test']['mae'] for x in all_metrics])
+
+        return summarized_metrics
 
     def get_classifier(self, clf_metadata):
 
@@ -156,9 +188,9 @@ class ClassifierUtils:
             clf = MultinomialNB()
         elif(clf_metadata['type'] == 'LR'):
             if(clf_metadata['multi_class'] == 'multinomial'):
-                clf = LogisticRegression(multi_class='multinomial', solver='saga', n_jobs = clf_metadata['n_jobs'])
+                clf = LogisticRegression(multi_class='multinomial', solver='saga', n_jobs = clf_metadata['n_jobs'], penalty=clf_metadata['penalty'], C=clf_metadata['C'])
             else:
-                clf = LogisticRegression(n_jobs=clf_metadata['n_jobs'])
+                clf = LogisticRegression(n_jobs=clf_metadata['n_jobs'], penalty=clf_metadata['penalty'], C=clf_metadata['C'])
         elif(clf_metadata['type'] == 'RF'):
             clf = RandomForestClassifier(n_estimators=clf_metadata['n_estimators'], max_depth=clf_metadata['max_depth'], n_jobs=clf_metadata['n_jobs'])
         elif(clf_metadata['type'] == 'OLS'):
@@ -179,7 +211,7 @@ class ClassifierUtils:
         else:
             tokenizer = self.tokenizer_sw
         if(features_metadata['type'] == 'count'):
-            vectorizer = CountVectorizer(tokenizer=tokenizer, binary=features_metadata['binary'])
+            vectorizer = CountVectorizer(tokenizer=tokenizer, binary=features_metadata['binary'], min_df=features_metadata['min_df'])
             vectorizer.fit(train_docs)
             X_train = vectorizer.transform(train_docs)
             X_test = vectorizer.transform(test_docs)
@@ -221,6 +253,56 @@ class ClassifierUtils:
             X_test = self.embed_documents(test_docs, 'USE', tokenizer)
 
         return X_train, X_test
+
+
+    def prepare_vocabulary(self, documents, restriction='word', min_frequency=0, max_frequency=float('inf'), min_df=0.0, max_df=1.0, min_dc = 0, max_dc = float('inf'), max_vocab_size=float('inf'), allow_stopwords=True):
+
+        df = Counter()
+        word_counts = Counter()
+        vocabulary = list()
+
+        if(allow_stopwords):
+            forbidden_fn = self.forbidden
+        else:
+            forbidden_fn = self.forbidden_sw
+
+        for document in documents:
+            curr_df = dict()
+            for word in self.nlp_light(document.lower()):
+                word_counts[word.text] += 1
+                curr_df[word.text] = 1
+            for word in curr_df:
+                df[word] += 1
+        if(restriction == 'word_count'):
+            for word in word_counts:
+                if(not forbidden_fn(word)):
+                    if(word_counts[word] > min_frequency and word_counts[word] < max_frequency):
+                        vocabulary.append(word)
+                        if(len(vocabulary) == max_vocab_size):
+                            break
+        elif(restriction == 'doc_frequency'):
+            doc_count = len(documents)
+            for word in df:
+                df[word] = df[word]/doc_count
+            for pair in df.most_common():
+                if(not forbidden_fn(pair[0])):
+                    if(pair[1] > min_df and pair[1] < max_df):
+                        vocabulary.append(pair[0])
+                        if(len(vocabulary) == max_vocab_size):
+                            break
+        elif(restriction == 'doc_count'):
+            for pair in df.most_common():
+                if(not forbidden_fn(pair[0])):
+                    if(pair[1] > min_dc and pair[1] < max_dc):
+                        vocabulary.append(pair[0])
+                        if(len(vocabulary) == max_vocab_size):
+                            break
+
+
+        return vocabulary
+                
+
+
 
 
     def embed_documents(self, docs, embedding_type, tokenizer):
@@ -329,6 +411,27 @@ class ClassifierUtils:
         return oversampled_X_train, undersampled_y_train
 
 
+    def get_metrics(self, clf, y_train, y_test, train_predicted, test_predicted, task):
+
+        if(task == 'classification'):
+            metrics = dict()
+            metrics['test'] = classification_report(y_test, test_predicted, output_dict=True)
+            metrics['test']['accuracy'] = accuracy_score(y_test, test_predicted)
+            metrics['test']['confusion_matrix'] = confusion_matrix(y_test, test_predicted)
+            metrics['train'] = classification_report(y_train, train_predicted, output_dict=True)
+            metrics['train']['accuracy'] = accuracy_score(y_train, train_predicted)
+            metrics['train']['confusion_matrix'] = confusion_matrix(y_train, train_predicted)
+        else:
+            metrics = dict()
+            metrics['test'] = dict()
+            metrics['test']['mse'] = mean_squared_error(y_test, test_predicted)
+            metrics['test']['mae'] = mean_absolute_error(y_test, test_predicted)
+            metrics['train']['mse'] = mean_squared_error(y_train, train_predicted)
+            metrics['train']['mae'] = mean_absolute_error(y_train, train_predicted)
+
+        return metrics
+
+
     def evaluate(self, train_docs, y_train, test_docs, y_test, clf_metadata, features_metadata, task='classification', return_predictions = False):
 
         clf = self.get_classifier(clf_metadata)
@@ -338,16 +441,11 @@ class ClassifierUtils:
         elif(features_metadata['sampling'] == 'under'):
             X_train, y_train = self.undersample(X_train, y_train)
         clf.fit(X_train, y_train)
-        y_predicted = clf.predict(X_test)
-        if(task == 'classification'):
-            metrics = classification_report(y_test, y_predicted, output_dict=True)
-            metrics['accuracy'] = accuracy_score(y_test, y_predicted)
-            metrics['confusion_matrix'] = confusion_matrix(y_test, y_predicted)
-        else:
-            metrics = dict()
-            metrics['mse'] = mean_squared_error(y_test, y_predicted)
-            metrics['mae'] = mean_absolute_error(y_test, y_predicted)
-            metrics['predictions'] = y_predicted
+        test_predicted = clf.predict(X_test)
+        train_predicted = clf.predict(X_train)
+        
+        metrics = self.get_metrics(clf, y_train, y_test, train_predicted, test_predicted, task)
+
         return metrics
 
 
