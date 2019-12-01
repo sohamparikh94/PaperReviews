@@ -295,6 +295,8 @@ class ClassifierUtils:
         
         if('ngram_range' in features_metadata):
             ngram_range = features_metadata['ngram_range']
+        else:
+            ngram_range = 1
 
         if(features_metadata['use_sw']):
             forbidden_fn = self.forbidden
