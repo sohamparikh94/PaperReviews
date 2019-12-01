@@ -8,7 +8,7 @@ from IPython import embed
 from scipy import sparse
 from collections import Counter
 
-
+from nltk import ngrams
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression, LinearRegression, Ridge, Lasso
 from sklearn.preprocessing import OneHotEncoder
@@ -293,7 +293,8 @@ class ClassifierUtils:
             max_vocab_size = float('inf')
         
         
-
+        if('ngram_range' in features_metadata):
+            ngram_range = features_metadata['ngram_range']
 
         if(features_metadata['use_sw']):
             forbidden_fn = self.forbidden
@@ -302,11 +303,19 @@ class ClassifierUtils:
 
         for document in documents:
             curr_df = dict()
-            for word in self.nlp_light(document.lower()):
-                word_counts[word.text] += 1
-                curr_df[word.text] = 1
+            tokens = [token.text for token in self.nlp_light(document.lower())]
+            for word in tokens:
+                word_counts[word] += 1
+                curr_df[word] = 1
+            for n in range(2, ngram_range+1):
+                ngrams_iter = ngrams(tokens, n)
+                for ngram in ngrams_iter:
+                    word = ' '.join(ngram)
+                    word_counts[word] += 1
+                    curr_df[word] = 1
             for word in curr_df:
                 df[word] += 1
+
         if(features_metadata['restriction'] == 'word_count'):
             for word in word_counts:
                 if(not forbidden_fn(word)):
@@ -411,13 +420,14 @@ class ClassifierUtils:
         examples = dict()
         undersampled_examples = dict()
         undersampled_X_train = list()
+        undersampled_y_train = list()
         min_num = min([num_labels[x] for x in num_labels])
         for label in num_labels:
             examples[label] = list()
         for idx, ex in enumerate(X_train):
             examples[y_train[idx]].append(ex)
         for label in examples:
-            undersampled_examples[y_train[idx]] = random.sample(examples[y_train[idx]], min_num)
+            undersampled_examples[label] = random.sample(examples[label], min_num)
         for label in examples:
             undersampled_X_train += undersampled_examples[label]
             undersampled_y_train += [label]*min_num
@@ -431,18 +441,22 @@ class ClassifierUtils:
         examples = dict()
         oversampled_examples = dict()
         oversampled_X_train = list()
-        min_num = max([num_labels[x] for x in num_labels])
+        oversampled_y_train = list()
+        max_num = max([num_labels[x] for x in num_labels])
         for label in num_labels:
             examples[label] = list()
         for idx, ex in enumerate(X_train):
             examples[y_train[idx]].append(ex)
         for label in examples:
-            oversampled_examples[y_train[idx]] = random.sample(examples[y_train[idx]], min_num)
+            oversampled_examples[label] = list()
+            for _ in range(max_num):
+                oversampled_examples[label].append(random.choice(examples[label]))
+            # oversampled_examples[y_train[idx]] = random.sample(examples[y_train[idx]], max_num)
         for label in examples:
             oversampled_X_train += oversampled_examples[label]
-            oversampled_y_train += [label]*min_num
+            oversampled_y_train += [label]*max_num
 
-        return oversampled_X_train, undersampled_y_train
+        return oversampled_X_train, oversampled_y_train
 
 
     def get_metrics(self, clf, y_train, y_test, train_predicted, test_predicted, task):
@@ -548,7 +562,6 @@ class ClassifierUtils:
                 important_features.append(feature_names[idx])
 
         return important_features
-
 
 
     def get_lr_features(self, train_docs, labels, multi_class='ovr', use_stopwords=True):
