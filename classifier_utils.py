@@ -491,7 +491,6 @@ class ClassifierUtils:
             ros = RandomOverSampler(random_state=0)
             X_train, y_train = ros.fit_resample(X_train, y_train)
             # X_train, y_train = self.oversample(X_train, y_train)
-            embed()
         elif(features_metadata['sampling'] == 'under'):
             rus = RandomUnderSampler(random_state=0)
             X_train, y_train = rus.fit_resample(X_train, y_train)
