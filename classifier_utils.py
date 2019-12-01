@@ -211,8 +211,8 @@ class ClassifierUtils:
         else:
             tokenizer = self.tokenizer_sw
         if(features_metadata['type'] == 'count'):
-            vectorizer = CountVectorizer(tokenizer=tokenizer, binary=features_metadata['binary'], min_df=features_metadata['min_df'])
-            vectorizer.fit(train_docs)
+            vocabulary = self.prepare_vocabulary(train_docs, features_metadata)
+            vectorizer = CountVectorizer(tokenizer=tokenizer, binary=features_metadata['binary'], vocabulary=vocabulary)
             X_train = vectorizer.transform(train_docs)
             X_test = vectorizer.transform(test_docs)
             if(features_metadata['use_length'] and not features_metadata['normalize']):
@@ -255,13 +255,47 @@ class ClassifierUtils:
         return X_train, X_test
 
 
-    def prepare_vocabulary(self, documents, restriction='word', min_frequency=0, max_frequency=float('inf'), min_df=0.0, max_df=1.0, min_dc = 0, max_dc = float('inf'), max_vocab_size=float('inf'), allow_stopwords=True):
+    # def prepare_vocabulary(self, documents, restriction='word_count', min_frequency=0, max_frequency=float('inf'), min_df=0.0, max_df=1.0, min_dc = 0, max_dc = float('inf'), max_vocab_size=float('inf'), allow_stopwords=True):
+    def prepare_vocabulary(self, documents, features_metadata):
 
         df = Counter()
         word_counts = Counter()
         vocabulary = list()
 
-        if(allow_stopwords):
+
+        if('min_frequency' in features_metadata):
+            min_frequency = features_metadata['min_frequency']
+        else:
+            min_frequency = 0
+        if('max_frequency' in features_metadata):
+            max_frequency = features_metadata['max_frequency']
+        else:
+            max_frequency = float('inf')
+        if('min_df' in features_metadata):
+            min_df = features_metadata['min_df']
+        else:
+            min_df = 0
+        if('max_df' in features_metadata):
+            max_df = features_metadata['max_df']
+        else:
+            max_df = 1.0
+        if('min_dc' in features_metadata):
+            min_dc = features_metadata['min_dc']
+        else:
+            min_dc = 0
+        if('max_dc' in features_metadata):
+            max_dc = features_metadata['max_dc']
+        else:
+            max_dc = float('inf')
+        if('max_vocab_size' in features_metadata):
+            max_vocab_size = features_metadata['max_vocab_size']
+        else:
+            max_vocab_size = float('inf')
+        
+        
+
+
+        if(features_metadata['use_sw']):
             forbidden_fn = self.forbidden
         else:
             forbidden_fn = self.forbidden_sw
@@ -273,14 +307,14 @@ class ClassifierUtils:
                 curr_df[word.text] = 1
             for word in curr_df:
                 df[word] += 1
-        if(restriction == 'word_count'):
+        if(features_metadata['restriction'] == 'word_count'):
             for word in word_counts:
                 if(not forbidden_fn(word)):
                     if(word_counts[word] > min_frequency and word_counts[word] < max_frequency):
                         vocabulary.append(word)
                         if(len(vocabulary) == max_vocab_size):
                             break
-        elif(restriction == 'doc_frequency'):
+        elif(features_metadata['restriction'] == 'doc_frequency'):
             doc_count = len(documents)
             for word in df:
                 df[word] = df[word]/doc_count
@@ -290,7 +324,7 @@ class ClassifierUtils:
                         vocabulary.append(pair[0])
                         if(len(vocabulary) == max_vocab_size):
                             break
-        elif(restriction == 'doc_count'):
+        elif(features_metadata['restriction'] == 'doc_count'):
             for pair in df.most_common():
                 if(not forbidden_fn(pair[0])):
                     if(pair[1] > min_dc and pair[1] < max_dc):
