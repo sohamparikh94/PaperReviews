@@ -189,12 +189,12 @@ class ClassifierUtils:
             clf = MultinomialNB()
         elif(clf_metadata['type'] == 'LR'):
             if(clf_metadata['multi_class'] == 'multinomial'):
-                clf = LogisticRegression(multi_class='multinomial', solver='saga', n_jobs = clf_metadata['n_jobs'], penalty=clf_metadata['penalty'], C=clf_metadata['C'])
+                clf = LogisticRegression(multi_class='multinomial', solver='saga', n_jobs = clf_metadata['n_jobs'], penalty=clf_metadata['penalty'], C=clf_metadata['C'], l1_ratio = clf_metadata['l1_ratio'])
             else:
                 if(clf_metadata['penalty'] != 'l2'):
-                    clf = LogisticRegression(solver='saga', n_jobs=clf_metadata['n_jobs'], penalty=clf_metadata['penalty'], C=clf_metadata['C'])
+                    clf = LogisticRegression(solver='saga', n_jobs=clf_metadata['n_jobs'], penalty=clf_metadata['penalty'], C=clf_metadata['C'], l1_ratio=clf_metadata['l1_ratio'])
                 else:
-                    clf = LogisticRegression(n_jobs=clf_metadata['n_jobs'], penalty=clf_metadata['penalty'], C=clf_metadata['C'])
+                    clf = LogisticRegression(n_jobs=clf_metadata['n_jobs'], penalty=clf_metadata['penalty'], C=clf_metadata['C'], l1_ratio=clf_metadata['l1_ratio'])
         elif(clf_metadata['type'] == 'RF'):
             clf = RandomForestClassifier(n_estimators=clf_metadata['n_estimators'], max_depth=clf_metadata['max_depth'], n_jobs=clf_metadata['n_jobs'])
         elif(clf_metadata['type'] == 'OLS'):
