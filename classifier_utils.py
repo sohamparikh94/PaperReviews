@@ -191,7 +191,10 @@ class ClassifierUtils:
             if(clf_metadata['multi_class'] == 'multinomial'):
                 clf = LogisticRegression(multi_class='multinomial', solver='saga', n_jobs = clf_metadata['n_jobs'], penalty=clf_metadata['penalty'], C=clf_metadata['C'])
             else:
-                clf = LogisticRegression(n_jobs=clf_metadata['n_jobs'], penalty=clf_metadata['penalty'], C=clf_metadata['C'])
+                if(clf_metadata['penalty'] == 'elasticnet'):
+                    clf = LogisticRegression(solver='saga', n_jobs=clf_metadata['n_jobs'], penalty=clf_metadata['penalty'], C=clf_metadata['C'])
+                else:
+                    clf = LogisticRegression(n_jobs=clf_metadata['n_jobs'], penalty=clf_metadata['penalty'], C=clf_metadata['C'])
         elif(clf_metadata['type'] == 'RF'):
             clf = RandomForestClassifier(n_estimators=clf_metadata['n_estimators'], max_depth=clf_metadata['max_depth'], n_jobs=clf_metadata['n_jobs'])
         elif(clf_metadata['type'] == 'OLS'):
