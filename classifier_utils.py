@@ -191,7 +191,7 @@ class ClassifierUtils:
             if(clf_metadata['multi_class'] == 'multinomial'):
                 clf = LogisticRegression(multi_class='multinomial', solver='saga', n_jobs = clf_metadata['n_jobs'], penalty=clf_metadata['penalty'], C=clf_metadata['C'])
             else:
-                if(clf_metadata['penalty'] == 'elasticnet'):
+                if(clf_metadata['penalty'] != 'l2'):
                     clf = LogisticRegression(solver='saga', n_jobs=clf_metadata['n_jobs'], penalty=clf_metadata['penalty'], C=clf_metadata['C'])
                 else:
                     clf = LogisticRegression(n_jobs=clf_metadata['n_jobs'], penalty=clf_metadata['penalty'], C=clf_metadata['C'])
