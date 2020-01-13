@@ -15,7 +15,8 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.metrics import *
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.decomposition import PCA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.decomposition import PCA, TruncatedSVD
 from collections import Counter
 
 from imblearn.over_sampling import RandomOverSampler
@@ -258,10 +259,10 @@ class ClassifierUtils:
             X_test = self.embed_documents(test_docs, 'USE', tokenizer)
 
         if(features_metadata['PCA'] == True):
-            pca = PCA(n_components=features_metadata['n_components'])
-            pca.fit(X_train)
-            X_train = pca.transform(X_train)
-            X_test = pca.transform(X_test)
+            svd = TruncatedSVD(n_components=features_metadata['n_components'])
+            svd.fit(X_train)
+            X_train = svd.transform(X_train)
+            X_test = svd.transform(X_test)
 
         return X_train, X_test
 
@@ -505,6 +506,11 @@ class ClassifierUtils:
             rus = RandomUnderSampler(random_state=0)
             X_train, y_train = rus.fit_resample(X_train, y_train)
             # X_train, y_train = self.undersample(X_train, y_train)
+        if(features_metadata['LDA']):
+            lda = LinearDiscriminantAnalysis(n_components=features_metadata['n_components'])
+            lda.fit(X_train, y_train)
+            X_train = lda.transform(X_train)
+            X_test = lda.transform(X_test)
         clf.fit(X_train, y_train)
         test_predicted = clf.predict(X_test)
         train_predicted = clf.predict(X_train)
