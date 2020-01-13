@@ -258,12 +258,19 @@ class ClassifierUtils:
             X_train = self.embed_documents(train_docs, 'USE', tokenizer)
             X_test = self.embed_documents(test_docs, 'USE', tokenizer)
 
-        if(features_metadata['PCA'] == True):
+        if(features_metadata['SVD'] == True):
             svd = TruncatedSVD(n_components=features_metadata['n_components'])
             svd.fit(X_train)
             X_train = svd.transform(X_train)
             X_test = svd.transform(X_test)
-
+        elif(features_metadata['PCA'] == True):
+            pca = PCA(n_components=features_metadata['n_components'])
+            dense_train = X_train.todense()
+            dense_test = X_test.todense()
+            pca.fit(dense_train)
+            X_train = pca.transform(dense_train)
+            X_test = pca.transform(dense_test)
+            pca.fit(dense_train)
         return X_train, X_test
 
 
