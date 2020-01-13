@@ -15,6 +15,7 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.metrics import *
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.decomposition import PCA
 from collections import Counter
 
 from imblearn.over_sampling import RandomOverSampler
@@ -255,6 +256,12 @@ class ClassifierUtils:
         elif(features_metadata['type'] == 'USE'):
             X_train = self.embed_documents(train_docs, 'USE', tokenizer)
             X_test = self.embed_documents(test_docs, 'USE', tokenizer)
+
+        if(features_metadata['PCA'] == True):
+            pca = PCA(n_components=features_metadata['n_components'])
+            pca.fit(X_train)
+            X_train = pca.transform(X_train)
+            X_test = pca.transform(X_test)
 
         return X_train, X_test
 
