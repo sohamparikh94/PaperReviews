@@ -510,7 +510,7 @@ class ClassifierUtils:
             lda = LinearDiscriminantAnalysis(n_components=features_metadata['n_components'])
             dense_train = X_train.todense()
             dense_test = X_test.todense()
-            lda.fit(dense, y_train)
+            lda.fit(dense_train, y_train)
             X_train = lda.transform(dense_train)
             X_test = lda.transform(dense_test)
         clf.fit(X_train, y_train)
