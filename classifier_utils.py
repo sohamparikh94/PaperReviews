@@ -494,6 +494,7 @@ class ClassifierUtils:
         else:
             metrics = dict()
             metrics['test'] = dict()
+            metrics['train'] = dict()
             metrics['test']['mse'] = mean_squared_error(y_test, test_predicted)
             metrics['test']['mae'] = mean_absolute_error(y_test, test_predicted)
             metrics['train']['mse'] = mean_squared_error(y_train, train_predicted)
