@@ -141,9 +141,10 @@ class ClassifierUtils:
         return splits
 
 
-    def cross_validate(self, documents, labels, clf_metadata, features_metadata, task='classification', num_splits=5):
+    def cross_validate(self, documents, labels, clf_metadata, features_metadata, task='classification', num_splits=5, splits=None):
 
-        splits = self.form_splits(documents, labels, num_splits=num_splits)
+        if(not splits):
+            splits = self.form_splits(documents, labels, num_splits=num_splits)
         all_metrics = list()
         for split in splits:
             metrics = self.evaluate(split['train_docs'], split['y_train'], split['test_docs'], split['y_test'], clf_metadata, features_metadata, task=task)
